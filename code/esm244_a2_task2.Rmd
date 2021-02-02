@@ -1,5 +1,5 @@
 ---
-title: "ESM244 Assignment 2 Task 2"
+title: "ESM244 Assignment 2 Task 2: Binary Logistic Regression"
 author: "Grace Brofman"
 date: "2/1/2021"
 output: html_document
@@ -8,23 +8,79 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+In a separate .Rmd saved as a2_task2_firstname_lastname.Rmd, using the Florida palmetto data (palmetto.csv), use binary logistic regression to test feasibility of using variables plant height (height), canopy length (length), canopy width (width), and number of green leaves (green_lvs) to classify whether a palmetto is species Serenoa repens or Sabal etonia. Use code folding and hide all messages & warnings in your knitted HTML. 
 
-## R Markdown
+Data source: Abrahamson, W.G. 2019. Survival, growth and biomass estimates of two dominant palmetto species of south-central Florida from 1981 - 2017, ongoing at 5-year intervals ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/f2f96ec76fbbd4b9db431c79a770c4d5
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+More information and metadata: https://portal.edirepository.org/nis/metadataviewer?packageid=edi.317.1
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+```{r}
+library(tidyverse)
+library(ggfortify)
+library(here)
+library(tidyverse)
+library(GGally) # for pairs plots
+library(broom) # for tidy model outputs in dataframes
+library(jtools) # to make quick graphs of model outputs
 
-```{r cars}
-summary(cars)
+palmetto <- read_csv(here("data", "palmetto.csv"))
 ```
 
-## Including Plots
+### Section 1: Explore the differences in height, canopy length, canopy width, and green leaves for the two species. Add a figure caption to each. Below each data visualization, add a short (~1 sentence) statement with a takeaway from the visualization.
 
-You can also embed plots, for example:
+```{r}
+# according to metadata, 1 (in species column) refers to "Serenoa repens" and 2 refers to "Sabal etonia"
+# see metadata for all other column/variable specifications
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+palmetto_explore <- palmetto %>% 
+  select(species, height, length, width, green_lvs) %>% 
+  mutate(species = as.factor(species))  # changing species classification from character to factor
+  
+palmetto_explore %>% 
+  ggpairs(aes(color = species))
+
+# pairs plots show lots of similarity in height and width, and the most visible difference in green leaves followed by length
+
+# visualizing width and height by species
+ggplot(data = palmetto_explore,
+       aes(x = width,
+           y = height)) +
+  geom_point(aes(color = species))
+# appears to be lots of overlap between the species for height/width
+
+# visualizing height and green leaves by species
+ggplot(data = palmetto_explore,
+       aes(x = height,
+           y = green_lvs)) +
+  geom_point(aes(color = species))
+# generally, nubmer of green leaves increases with height. species 1 appears to have a greater number of green leaves than species 2
+
+# visualizing canopy length and green leaves by species
+ggplot(data = palmetto_explore,
+       aes(x = length,
+           y = green_lvs)) +
+  geom_point(aes(color = species))
+# generally, green leaves and canopy length appear to be positively correlated. species 1 tends to have more green leaves (and a broader range of # of leaves)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Section 2: perform binary logistic regression using plant height, canopy length, canopy width and green leaves as predictor variables to understand how they relate to probability of a plant being Serenoa repens or Sabal etonia (make sure you understand which species is the first ‘0’ factor level, and which is ‘1’ - you may want to convert to a factor first, then use the levels() function to check). The output should be a finalized table containing the binary logistic regression model results (at least coefficients, standard errors for the coefficients, and information for significance - consider using broom::tidy() to get you most of the way). 
+
+```{r}
+
+```
+
+### Section 3: A section that evaluates how successfully this model would “classify” a plant as the correct species, using a 50% cutoff (e.g. if the probability is >=50% that it is species A, then it would be classified as species A). You should use broom::augment() to find the probabilities for each plant in the original dataset, then add a column for which species the model (using that 50% cutoff) would classify that plant as using the 4 included predictor variables. The outcome should be a finalized table showing, for each species, how many plants in the original dataset would be correctly classified and how many were incorrectly classified by the model, as well as an additional column with “% correctly classified”. Add a table caption above the table
+
+```{r}
+
+```
+
+
+
+Data source: Abrahamson, W.G. 2019. Survival, growth and biomass estimates of two dominant palmetto species of south-central Florida from 1981 - 2017, ongoing at 5-year intervals ver 1. Environmental Data Initiative. https://doi.org/10.6073/pasta/f2f96ec76fbbd4b9db431c79a770c4d5
+
+
+
+
+
+
