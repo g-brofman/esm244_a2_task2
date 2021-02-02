@@ -17,6 +17,10 @@ More information and metadata: https://portal.edirepository.org/nis/metadataview
 ```{r}
 library(tidyverse)
 library(ggfortify)
+library(viridis)
+library(RColorBrewer)
+library(hrbrthemes)
+library(patchwork)
 library(here)
 library(tidyverse)
 library(GGally) # for pairs plots
@@ -61,6 +65,86 @@ ggplot(data = palmetto_explore,
            y = green_lvs)) +
   geom_point(aes(color = species))
 # generally, green leaves and canopy length appear to be positively correlated. species 1 tends to have more green leaves (and a broader range of # of leaves)
+# 6215 of species 1, 6245 of species 2
+```
+
+```{r}
+# Palmetto height by species density plot
+
+graph_1 <- ggplot(data = palmetto_explore,
+       aes(x = height, group = species, fill = species)) +
+  geom_density(alpha = 0.5) +
+  theme_ipsum() + # custom theme
+  labs(x = "Height (cm)",
+       y = "Density",
+       title = "Palmetto height density distribution by species") +
+  theme(legend.position = c(0.9, 0.6), # moves legend
+        legend.direction = "vertical") + # legen orientation
+  scale_fill_manual(values = c("#21908c80", "#fde72580"), # custom colors
+                    name = "Species",
+                    labels = c("Serenoa repens", "Sabal etonia"))
+  
+```
+
+
+```{r}
+# Palmetto width by species density plot
+
+graph_2 <- ggplot(data = palmetto_explore,
+       aes(x = width, group = species, fill = species)) +
+  geom_density(alpha = 0.5) +
+  theme_ipsum() + # custom theme
+  labs(x = "Width (cm)",
+       y = "Density",
+       title = "Palmetto canopy width density distribution by species") +
+  theme(legend.position = c(0.9, 0.6), # moves legend
+        legend.direction = "vertical") + # legen orientation
+  scale_fill_manual(values = c("#21908c80", "#fde72580"), # custom colors
+                    name = "Species",
+                    labels = c("Serenoa repens", "Sabal etonia"))
+```
+
+
+```{r}
+# Palmetto canopy length by species density plot (length = widest length of the canopy)
+
+graph_3 <- ggplot(data = palmetto_explore,
+       aes(x = length, group = species, fill = species)) +
+  geom_density(alpha = 0.5) +
+  theme_ipsum() + # custom theme
+  labs(x = "Canopy length (cm)",
+       y = "Density",
+       title = "Palmetto canopy length density distribution by species") +
+  theme(legend.position = c(0.9, 0.6), # moves legend
+        legend.direction = "vertical") + # legend orientation
+  scale_fill_manual(values = c("#21908c80", "#fde72580"), # custom colors
+                    name = "Species",
+                    labels = c("Serenoa repens", "Sabal etonia"))
+```
+
+
+
+```{r}
+# Palmetto leaf number by species density plot
+
+graph_4 <- ggplot(data = palmetto_explore,
+       aes(x = green_lvs, group = species, fill = species)) +
+  geom_histogram(alpha = 0.5, bins = 19, color = "black") +
+  theme_ipsum() + # custom theme
+  labs(x = "Green leaf count",
+       y = "Density",
+       title = "Palmetto green leaf count density distribution by species") +
+  theme(legend.position = c(0.9, 0.6), # moves legend
+        legend.direction = "vertical") + # legen orientation
+  scale_fill_manual(values = c("#21908c80", "#fde72580"), # custom colors
+                    name = "Species",
+                    labels = c("Serenoa repens", "Sabal etonia"))
+```
+
+
+```{r}
+# combining graphs into one using patchwork
+(graph_1 + graph_2) / (graph_3 + graph_4)
 ```
 
 ### Section 2: perform binary logistic regression using plant height, canopy length, canopy width and green leaves as predictor variables to understand how they relate to probability of a plant being Serenoa repens or Sabal etonia (make sure you understand which species is the first ‘0’ factor level, and which is ‘1’ - you may want to convert to a factor first, then use the levels() function to check). The output should be a finalized table containing the binary logistic regression model results (at least coefficients, standard errors for the coefficients, and information for significance - consider using broom::tidy() to get you most of the way). 
