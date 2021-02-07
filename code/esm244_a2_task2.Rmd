@@ -149,13 +149,128 @@ graph_4 <- ggplot(data = palmetto_explore,
 
 ### Section 2: perform binary logistic regression using plant height, canopy length, canopy width and green leaves as predictor variables to understand how they relate to probability of a plant being Serenoa repens or Sabal etonia (make sure you understand which species is the first ‘0’ factor level, and which is ‘1’ - you may want to convert to a factor first, then use the levels() function to check). The output should be a finalized table containing the binary logistic regression model results (at least coefficients, standard errors for the coefficients, and information for significance - consider using broom::tidy() to get you most of the way). 
 
+Binary logistic regression
+- plant height
+- canopy length
+- canopy width
+- green leaves
+As predictor values for species
 ```{r}
+# species has already been changed to a factor in palmetto_explore, so need to determine which factor is "0" level using levels(palmetto_explore$species)
+# no need to use fact_drop() (see lab 3 part 1) because we're already working with just the species we need
+# Species "1" (Serenoa repens) is 0 order, Species "2" (Sabal etonia) is 1 order
+
+# setting up generalized linear model
+palmetto_blr <- glm(species ~ height + length + width + green_lvs,
+                    data = palmetto_explore,
+                    family = "binomial")
+
+palmetto_blr # shows intercept/coefficient values for each predictor variable
+
+summary(palmetto_blr) # gives more information - all p-values are significantly < 0.05
+
+# because species 1 is the reference species, the left-hand side of our log linear expression (equation) will the the probability of species 2 (the log odds of the non-zero level)
+# we expect on average that as height increases, the odds of it being species 2 goes down (based on the sign), although it's the smallest coefficient of the 4.
+# ... as length increases the odds of it being species 2 increase
+# ... as width increases, the odds of it being species 2 decrese
+# ... as number of green leaves increases, the odds of it being species 2 decrease. This is the largest coefficient of the 4, suggesting it may be the strongest predictor variable (this is also reflected in the graphs)
+
+```
+
+```{r}
+# data viz - does it make sense that as number of leaves increases, the odds of being species 2 decreases?
+ggplot(data = palmetto_explore,
+       aes(x = species,
+           y = length)) +
+  geom_jitter(aes(color = species))
+```
+```{r}
+# look at actual probabilities using broom::augment()
+# What are the actual probabilities of being species 2 for each of the existing observations in our palmettoexplore dataframe?
+
+palmetto_fitted <- palmetto_blr %>% 
+  broom::augment(type.predict = "response")
+
+# now added on to df we see more info for our model outcomes
+# .fitted column is based on our blr, the probability based on 4 predictor variables, that our palmetto is species 2. 
+
+# plotting fitted probabilities
+ggplot(data = palmetto_fitted,
+       aes(x = green_lvs,
+           y = .fitted)) +
+  geom_point(aes(color = species)) +
+  geom_smooth(aes(color = species), se = FALSE) +
+  labs(x = "Number of green leaves",
+       y = "Probability of outcome Species 2")
+
+# we see that there are plenty of species 1 that would be classified as species 2
+
+# use broom::tidy() to convert to table
+
+palmetto_table <- palmetto_blr %>% 
+  broom::tidy() %>% 
+  rename(coeficients = term) %>% 
+  rename ("standard error" = std.error) %>% 
+  rename("p-value" = p.value)
+
+palmetto_table
 
 ```
 
 ### Section 3: A section that evaluates how successfully this model would “classify” a plant as the correct species, using a 50% cutoff (e.g. if the probability is >=50% that it is species A, then it would be classified as species A). You should use broom::augment() to find the probabilities for each plant in the original dataset, then add a column for which species the model (using that 50% cutoff) would classify that plant as using the 4 included predictor variables. The outcome should be a finalized table showing, for each species, how many plants in the original dataset would be correctly classified and how many were incorrectly classified by the model, as well as an additional column with “% correctly classified”. Add a table caption above the table
 
 ```{r}
+palm_fit <- palmetto_fitted %>% 
+mutate(species_name = case_when(species == 1 ~ "Serenoa_repens",
+                             species == 2 ~ "Sabal_etonia"))
+
+#palmetto_predict <- palmetto_fitted %>% 
+ # broom::augment()
+
+
+# palm_predict <- palm_fit %>% 
+#   mutate(pred_spec = case_when(.fitted >= .5 ~ "Serenoa_repens",
+#                                .fitted < .5 ~ "Sabal_etonia")) %>% 
+#   mutate(true_pred = case_when(species_name == pred_spec ~ "Correct",
+#                                species_name != pred_spec ~ "Incorrect"))
+# 
+# counting <- palm_predict %>% 
+#   group_by(species_name) %>% 
+#   count(true_pred)
+# 
+# count_table <- counting %>% 
+#   pivot_wider(names_from = true_pred, values_from = n) %>% 
+#   mutate(pct_correct = (Correct / (Correct + Incorrect))*100)
+
+# trying again with switched species names
+palm_predict_2 <- palm_fit %>% 
+    mutate(pred_spec = case_when(.fitted >= .5 ~ "Sabal_etonia",
+                               .fitted < .5 ~ "Serenoa_repens")) %>% 
+  mutate(true_pred = case_when(species_name == pred_spec ~ "Correct",
+                               species_name != pred_spec ~ "Incorrect"))
+
+counting_2 <- palm_predict_2 %>% 
+  group_by(species_name) %>% 
+  count(true_pred)
+
+count_table_2 <- counting_2 %>% 
+  pivot_wider(names_from = true_pred, values_from = n) %>% 
+  mutate(pct_correct = (Correct / (Correct + Incorrect))*100)
+
+# make a kable table
+library(kableExtra)
+
+prediction_table <- count_table_2 %>% 
+  kable(col.names = c("Species",
+                      "Correctly Classified",
+                      "Incorrectly Classified", 
+                     "Percent Correctly Classified")) %>% 
+  kable_styling(bootstrap_options = "striped", 
+                full_width = F,
+                position = "left") %>% 
+  add_header_above(c("Test title" = 4))
+
+prediction_table
 
 ```
 
